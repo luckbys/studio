@@ -32,7 +32,6 @@ export async function getAiSummary(
   }
 
   // For now, we assume all users are on the "free" plan.
-  // This can be expanded later with a "plan" field on the user document.
   const userPlan = 'free';
 
   const userDocRef = doc(db, 'users', user.uid);
@@ -110,8 +109,6 @@ export async function getAiCategorySuggestion(
   transactionName: string
 ): Promise<SuggestCategoryOutput | null> {
   const user = auth.currentUser;
-  // For now, we assume all users can use this feature.
-  // In the future, we can check for the user's plan (free/pro).
   if (!user) {
     return null;
   }
