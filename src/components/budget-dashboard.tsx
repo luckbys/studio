@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, type FC } from 'react';
@@ -7,9 +8,12 @@ import { z } from 'zod';
 import {
   ArrowDown,
   ArrowUp,
+  Banknote,
   BarChart,
   DollarSign,
+  Landmark,
   Loader2,
+  MoreHorizontal,
   Plus,
   Trash,
   Wand2,
@@ -178,14 +182,14 @@ export function BudgetDashboard() {
 
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Renda Total</CardTitle>
-            <DollarSign className="h-5 w-5 text-muted-foreground" />
+            <Banknote className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
+            <div className="text-2xl font-bold text-primary">{formatCurrency(totalIncome)}</div>
             <p className="text-xs text-muted-foreground">Total de rendimentos no período</p>
           </CardContent>
         </Card>
@@ -195,99 +199,35 @@ export function BudgetDashboard() {
             <DollarSign className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
+            <div className="text-2xl font-bold text-destructive">{formatCurrency(totalExpenses)}</div>
             <p className="text-xs text-muted-foreground">Total de gastos no período</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Saldo</CardTitle>
-            <BarChart className="h-5 w-5 text-muted-foreground" />
+            <Landmark className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+            <div className={`text-2xl font-bold ${balance >= 0 ? 'text-blue-600' : 'text-destructive'}`}>
               {formatCurrency(balance)}
             </div>
             <p className="text-xs text-muted-foreground">Balanço final do período</p>
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Gastos por Categoria</CardTitle>
-                    <CardDescription>Uma visão geral de onde seu dinheiro está indo.</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[300px] w-full pl-0">
-                    {chartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RechartsBarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30 }}>
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} width={100} />
-                                <Tooltip
-                                  cursor={{ fill: 'hsl(var(--muted))' }}
-                                  content={({ active, payload }) => {
-                                    if (active && payload && payload.length) {
-                                      return (
-                                        <div className="rounded-lg border bg-background p-2 shadow-sm">
-                                          <p className="font-medium">{`${payload[0].payload.name}`}</p>
-                                          <p className="text-sm text-primary font-semibold">{formatCurrency(payload[0].value as number)}</p>
-                                        </div>
-                                      );
-                                    }
-                                    return null;
-                                  }}
-                                />
-                                <Bar dataKey="total" radius={[0, 4, 4, 0]} fill="hsl(var(--chart-1))" />
-                            </RechartsBarChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                            <p>Nenhuma despesa para exibir.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Resumo com IA</CardTitle>
-                    <CardDescription>Receba insights sobre seus hábitos financeiros.</CardDescription>
-                </CardHeader>
-                 <CardContent className="flex flex-col h-[236px]">
-                    {isSummaryLoading ? (
-                        <div className="flex-1 flex items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : (
-                        <ScrollArea className="flex-1">
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                                {aiSummary || 'Clique no botão abaixo para gerar um resumo financeiro com a ajuda da nossa inteligência artificial.'}
-                            </p>
-                        </ScrollArea>
-                    )}
-                </CardContent>
-                <CardFooter>
-                    <Button onClick={handleGenerateSummary} disabled={isSummaryLoading} className="w-full">
-                        <Wand2 className="mr-2 h-4 w-4" />
-                        {isSummaryLoading ? 'Gerando...' : 'Gerar Resumo'}
-                    </Button>
-                </CardFooter>
-            </Card>
-        </div>
-        <Card className="lg:col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Transações</CardTitle>
-              <CardDescription>Visualize e gerencie.</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-             <div className="p-6">
-                <Dialog open={isAddTransactionOpen} onOpenChange={setAddTransactionOpen}>
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Transações Recentes</CardTitle>
+                <CardDescription>Visualize e gerencie suas movimentações financeiras.</CardDescription>
+              </div>
+               <Dialog open={isAddTransactionOpen} onOpenChange={setAddTransactionOpen}>
                 <DialogTrigger asChild>
-                    <Button className="w-full"><Plus className="mr-2 h-4 w-4"/> Adicionar Transação</Button>
+                    <Button><Plus className="mr-2 h-4 w-4"/> Adicionar Transação</Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
@@ -370,14 +310,14 @@ export function BudgetDashboard() {
                     </Form>
                 </DialogContent>
                 </Dialog>
-             </div>
-             <Separator />
-            <ScrollArea className="h-[600px]">
+            </CardHeader>
+            <CardContent className="p-0">
               <Table>
                  <TableHeader>
                     <TableRow>
                         <TableHead>Transação</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
+                        <TableHead className="w-[80px]"></TableHead>
                     </TableRow>
                  </TableHeader>
                 <TableBody>
@@ -389,8 +329,8 @@ export function BudgetDashboard() {
                         return (
                         <TableRow key={t.id}>
                           <TableCell className="font-medium flex items-center gap-3">
-                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
-                                 <Icon className={`h-4 w-4 ${t.type === 'income' ? 'text-green-500' : 'text-muted-foreground'}`}/>
+                              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+                                 <Icon className={`h-5 w-5 ${t.type === 'income' ? 'text-green-500' : 'text-muted-foreground'}`}/>
                               </div>
                               <div className="flex flex-col">
                                  <span className="font-semibold">{t.name}</span>
@@ -398,28 +338,91 @@ export function BudgetDashboard() {
                               </div>
                           </TableCell>
                           <TableCell className="text-right">
-                              <div className={`font-mono font-semibold ${t.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
+                              <div className={`font-mono font-semibold text-base ${t.type === 'income' ? 'text-green-600' : 'text-slate-700'}`}>
                                 {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
                               </div>
-                              <div className="flex items-center justify-end mt-1">
-                                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteTransaction(t.id)}>
-                                    <Trash className="h-3.5 w-3.5 text-muted-foreground"/>
-                                 </Button>
-                              </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteTransaction(t.id)}>
+                                <Trash className="h-4 w-4 text-muted-foreground"/>
+                            </Button>
                           </TableCell>
                         </TableRow>
                         );
                       })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={2} className="text-center h-24">Nenhuma transação ainda.</TableCell>
+                      <TableCell colSpan={3} className="text-center h-24">Nenhuma transação ainda.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-1 space-y-6">
+           <Card>
+                <CardHeader>
+                    <CardTitle>Gastos por Categoria</CardTitle>
+                    <CardDescription>Visão geral de onde seu dinheiro está indo.</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[250px] w-full pl-0">
+                    {chartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RechartsBarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30 }}>
+                                <XAxis type="number" hide />
+                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} width={100} />
+                                <Tooltip
+                                  cursor={{ fill: 'hsl(var(--muted))' }}
+                                  content={({ active, payload }) => {
+                                    if (active && payload && payload.length) {
+                                      return (
+                                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                          <p className="font-medium">{`${payload[0].payload.name}`}</p>
+                                          <p className="text-sm text-primary font-semibold">{formatCurrency(payload[0].value as number)}</p>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                                <Bar dataKey="total" radius={[0, 4, 4, 0]} fill="hsl(var(--chart-1))" />
+                            </RechartsBarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                            <p>Nenhuma despesa para exibir.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Resumo com IA</CardTitle>
+                    <CardDescription>Receba insights sobre seus hábitos financeiros.</CardDescription>
+                </CardHeader>
+                 <CardContent className="flex flex-col h-[236px]">
+                    {isSummaryLoading ? (
+                        <div className="flex-1 flex items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : (
+                         <ScrollArea className="flex-1">
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                                {aiSummary || 'Clique no botão abaixo para gerar um resumo financeiro com a ajuda da nossa inteligência artificial.'}
+                            </p>
+                        </ScrollArea>
+                    )}
+                </CardContent>
+                <CardFooter>
+                    <Button onClick={handleGenerateSummary} disabled={isSummaryLoading} className="w-full">
+                        <Wand2 className="mr-2 h-4 w-4" />
+                        {isSummaryLoading ? 'Gerando...' : 'Gerar Resumo'}
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
       </div>
     </div>
   );
