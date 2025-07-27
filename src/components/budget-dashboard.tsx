@@ -154,9 +154,6 @@ export function BudgetDashboard() {
     },
   });
 
-  const transactionName = form.watch('name');
-  const transactionType = form.watch('type');
-
   useEffect(() => {
     if (user) {
       // Listen for transaction changes
@@ -204,29 +201,6 @@ export function BudgetDashboard() {
       };
     }
   }, [user]);
-
-  useEffect(() => {
-    const handler = setTimeout(async () => {
-      if (transactionName && transactionName.length > 2 && transactionType === 'expense' && !editingTransaction) {
-        setSuggestionLoading(true);
-        try {
-          const result = await getAiCategorySuggestion(transactionName);
-          if (result && result.category) {
-            form.setValue('category', result.category);
-          }
-        } catch (error) {
-            console.error("Failed to get category suggestion:", error)
-        } finally {
-            setSuggestionLoading(false);
-        }
-      }
-    }, 750); // 750ms debounce delay
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [transactionName, transactionType, form, editingTransaction]);
-
 
   const transactions = useMemo(() => {
     return allTransactions.filter(t => {
@@ -320,7 +294,6 @@ export function BudgetDashboard() {
       return;
     }
     
-    // Create user doc if it doesn't exist
     const userDocRef = doc(db, 'users', user.uid);
     const userDocSnap = await getDoc(userDocRef);
     if (!userDocSnap.exists()) {
@@ -409,6 +382,46 @@ export function BudgetDashboard() {
     setAiSummary(summary);
     setSummaryLoading(false);
   };
+  
+  const handleSuggestCategory = async () => {
+    const transactionName = form.getValues('name');
+    if (!transactionName || transactionName.trim().length < 3) {
+      toast({
+        title: 'Nome da transação muito curto',
+        description: 'Digite um nome com pelo menos 3 caracteres para obter uma sugestão.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSuggestionLoading(true);
+    try {
+      const result = await getAiCategorySuggestion(transactionName);
+      if (result && result.category) {
+        form.setValue('category', result.category, { shouldValidate: true });
+        toast({
+          title: 'Sugestão Aplicada!',
+          description: `A categoria "${result.category}" foi selecionada.`,
+        });
+      } else {
+        toast({
+          title: 'Não foi possível sugerir',
+          description: 'Não conseguimos encontrar uma categoria para essa transação.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+        console.error("Failed to get category suggestion:", error)
+        toast({
+          title: 'Erro de IA',
+          description: 'Ocorreu um erro ao se comunicar com a IA.',
+          variant: 'destructive',
+        });
+    } finally {
+        setSuggestionLoading(false);
+    }
+  };
+
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -846,30 +859,37 @@ export function BudgetDashboard() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                         <div className="flex items-center gap-2">
-                           Categoria
-                           {isSuggestionLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                         </div>
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione uma categoria" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Categoria</FormLabel>
+                      <div className="flex gap-2">
+                        <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            defaultValue={field.value}
+                        >
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione uma categoria" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {categories.map((cat) => (
+                                <SelectItem key={cat} value={cat}>
+                                {cat}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <Button 
+                            type="button" 
+                            variant="outline"
+                            size="icon"
+                            onClick={handleSuggestCategory}
+                            disabled={isSuggestionLoading || !form.watch('name')}
+                        >
+                            {isSuggestionLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Wand2 className="h-4 w-4"/>}
+                            <span className="sr-only">Sugerir Categoria com IA</span>
+                        </Button>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -892,5 +912,3 @@ export function BudgetDashboard() {
     </>
   );
 }
-
-    
