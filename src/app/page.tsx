@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Lightbulb, LogIn, Wallet, Target, Check, X } from 'lucide-react';
+import { BarChart, Lightbulb, LogIn, Wallet, Target, Check, X, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -86,12 +86,12 @@ export default function Home() {
                      <Card>
                         <CardHeader className="flex-row items-center gap-4">
                              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10">
-                                <Target className="h-6 w-6 text-primary" />
+                                <TrendingUp className="h-6 w-6 text-primary" />
                             </div>
-                            <CardTitle>Metas de Economia</CardTitle>
+                            <CardTitle>Acompanhe Investimentos</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground">Defina metas de economia mensais e acompanhe seu progresso de forma simples e motivadora.</p>
+                            <p className="text-muted-foreground">Cadastre seus aportes e acompanhe o desenvolvimento de seus investimentos junto com suas despesas.</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -207,6 +207,10 @@ export default function Home() {
                                  <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary" />
                                     <span>Metas de economia</span>
+                                </li>
+                                  <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Acompanhamento de Investimentos</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary" />

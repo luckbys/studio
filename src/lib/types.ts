@@ -1,6 +1,6 @@
-export type Category = 'Moradia' | 'Transporte' | 'Alimentação' | 'Saúde' | 'Educação' | 'Lazer' | 'Outros';
+export type Category = 'Moradia' | 'Transporte' | 'Alimentação' | 'Saúde' | 'Educação' | 'Lazer' | 'Investimentos' | 'Outros';
 
-export const categories: Category[] = ['Moradia', 'Transporte', 'Alimentação', 'Saúde', 'Educação', 'Lazer', 'Outros'];
+export const categories: Category[] = ['Moradia', 'Transporte', 'Alimentação', 'Saúde', 'Educação', 'Lazer', 'Investimentos', 'Outros'];
 
 export type Transaction = {
   id: string;
