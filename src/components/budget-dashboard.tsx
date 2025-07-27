@@ -381,14 +381,16 @@ export function BudgetDashboard() {
   };
 
   const handleGenerateSummary = async () => {
+    if (!user) return;
     setSummaryLoading(true);
     setAiSummary('');
-    const summary = await getAiSummary(transactions, savingsGoal);
+    const summary = await getAiSummary(user.uid, transactions, savingsGoal);
     setAiSummary(summary);
     setSummaryLoading(false);
   };
   
   const handleSuggestCategory = async () => {
+    if (!user) return;
     const transactionName = form.getValues('name');
     if (!transactionName || transactionName.trim().length < 3) {
       toast({
@@ -401,7 +403,7 @@ export function BudgetDashboard() {
 
     setSuggestionLoading(true);
     try {
-      const result = await getAiCategorySuggestion(transactionName);
+      const result = await getAiCategorySuggestion(user.uid, transactionName);
       if (result && result.category) {
         form.setValue('category', result.category, { shouldValidate: true });
         toast({

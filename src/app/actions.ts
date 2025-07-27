@@ -18,23 +18,22 @@ import {
   type SuggestCategoryOutput,
 } from '@/ai/flows/suggest-category';
 import type { Transaction } from '@/lib/types';
-import { auth } from '@/lib/firebase';
 
 const FREE_PLAN_LIMIT = 2;
 
 export async function getAiSummary(
+  uid: string,
   transactions: Transaction[],
   savingsGoal: number
 ): Promise<GenerateMonthlySummaryOutput | string> {
-  const user = auth.currentUser;
-  if (!user) {
+   if (!uid) {
     return 'Você precisa estar logado para gerar um resumo.';
   }
 
   // For now, we assume all users are on the "free" plan.
   const userPlan = 'free';
 
-  const userDocRef = doc(db, 'users', user.uid);
+  const userDocRef = doc(db, 'users', uid);
   const userDocSnap = await getDoc(userDocRef);
 
   const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -90,8 +89,8 @@ export async function getAiSummary(
     } else {
       // First time usage, create the document
       await setDoc(userDocRef, {
-        uid: user.uid,
-        email: user.email,
+        uid: uid,
+        // email: user.email, // email is not available here
         createdAt: serverTimestamp(),
         aiUsageMonth: currentMonth,
         aiUsageCount: 1,
@@ -106,10 +105,10 @@ export async function getAiSummary(
 }
 
 export async function getAiCategorySuggestion(
+  uid: string,
   transactionName: string
 ): Promise<SuggestCategoryOutput | null> {
-  const user = auth.currentUser;
-  if (!user) {
+  if (!uid) {
     return null;
   }
 
