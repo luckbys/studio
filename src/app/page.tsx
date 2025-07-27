@@ -1,9 +1,8 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Lightbulb, LogIn, PiggyBank, Target, Check } from 'lucide-react';
+import { BarChart, Lightbulb, LogIn, PiggyBank, Target, Check, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -205,13 +204,21 @@ export default function Home() {
                                     <Check className="h-4 w-4 text-primary" />
                                     <span>Dashboard intuitivo</span>
                                 </li>
-                                <li className="flex items-center gap-2">
+                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary" />
-                                    <span>Resumos com IA</span>
+                                    <span>Metas de economia</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary" />
-                                    <span>Metas de economia</span>
+                                    <span>2 Resumos com IA por mês</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <X className="h-4 w-4 text-destructive" />
+                                    <span>Relatórios avançados</span>
+                                </li>
+                                 <li className="flex items-center gap-2">
+                                    <X className="h-4 w-4 text-destructive" />
+                                    <span>Suporte prioritário</span>
                                 </li>
                             </ul>
                         </CardContent>
@@ -235,6 +242,10 @@ export default function Home() {
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary" />
                                     <span>Tudo do plano Grátis</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Resumos com IA ilimitados</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary" />
@@ -282,5 +293,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

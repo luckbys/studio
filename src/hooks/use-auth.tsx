@@ -13,7 +13,9 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+
 
 interface AuthContextType {
   user: User | null;
@@ -44,8 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const signup = (email: string, pass: string) => {
-    return createUserWithEmailAndPassword(auth, email, pass);
+  const signup = async (email: string, pass: string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+    const user = userCredential.user;
+    // Create a document for the new user
+    await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        createdAt: serverTimestamp(),
+        aiUsageCount: 0,
+        aiUsageMonth: new Date().toISOString().slice(0, 7), // YYYY-MM
+    });
+    return userCredential;
   };
 
   const login = (email: string, pass: string) => {
