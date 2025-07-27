@@ -1,6 +1,8 @@
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, BarChart, Lightbulb, PiggyBank, Target } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { BarChart, Lightbulb, LogIn, PiggyBank, Target } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -52,7 +54,7 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="py-16 bg-muted/40">
+        <section id="features" className="py-16 bg-muted/40">
             <div className="container">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-bold tracking-tight">Tudo que você precisa para uma vida financeira saudável</h2>
@@ -94,6 +96,88 @@ export default function Home() {
                     </Card>
                 </div>
             </div>
+        </section>
+
+        {/* How it works */}
+        <section id="how-it-works" className="container py-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight">Comece a usar em 3 passos simples</h2>
+            <p className="text-muted-foreground mt-2">É rápido e fácil organizar suas finanças.</p>
+          </div>
+          <div className="grid gap-12 md:grid-cols-3">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary text-primary-foreground font-bold text-2xl mb-4">1</div>
+              <h3 className="text-xl font-semibold mb-2">Crie sua Conta</h3>
+              <p className="text-muted-foreground">Cadastre-se gratuitamente em menos de um minuto.</p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary text-primary-foreground font-bold text-2xl mb-4">2</div>
+              <h3 className="text-xl font-semibold mb-2">Adicione Transações</h3>
+              <p className="text-muted-foreground">Registre suas rendas e despesas de forma rápida e organizada.</p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary text-primary-foreground font-bold text-2xl mb-4">3</div>
+              <h3 className="text-xl font-semibold mb-2">Receba Insights</h3>
+              <p className="text-muted-foreground">Use a IA para entender seus gastos e encontrar formas de economizar.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section id="testimonials" className="py-16 bg-muted/40">
+          <div className="container">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tight">O que nossos usuários dizem</h2>
+              <p className="text-muted-foreground mt-2">Veja como o Controle Fácil está ajudando pessoas a transformarem suas vidas financeiras.</p>
+            </div>
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center mb-4">
+                    <Avatar className="h-12 w-12 mr-4">
+                      <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="person photo" />
+                      <AvatarFallback>JC</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">Joana Costa</h3>
+                      <p className="text-sm text-muted-foreground">Designer</p>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground">"Finalmente um app financeiro que eu consigo usar! A interface é linda e a IA me deu dicas que eu nunca tinha pensado."</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center mb-4">
+                    <Avatar className="h-12 w-12 mr-4">
+                       <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="person photo" />
+                       <AvatarFallback>MP</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">Marcos Paulo</h3>
+                      <p className="text-sm text-muted-foreground">Desenvolvedor</p>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground">"O Controle Fácil mudou minha relação com o dinheiro. As metas de economia são um grande motivador. Recomendo!"</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center mb-4">
+                    <Avatar className="h-12 w-12 mr-4">
+                       <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="woman photo" />
+                       <AvatarFallback>AS</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">Ana Silva</h3>
+                      <p className="text-sm text-muted-foreground">Autônoma</p>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground">"Simples, direto ao ponto e muito poderoso. A melhor ferramenta para quem quer ter controle total sobre as finanças."</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </section>
 
          {/* Call to Action Section */}
