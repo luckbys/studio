@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, type FC, useEffect, useCallback } from 'react';
@@ -53,7 +54,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -218,7 +218,9 @@ export function BudgetDashboard() {
   }, [form]);
 
   useEffect(() => {
+    if (debouncedTransactionName) {
       handleCategorySuggestion(debouncedTransactionName);
+    }
   }, [debouncedTransactionName, handleCategorySuggestion]);
 
 
@@ -883,3 +885,5 @@ export function BudgetDashboard() {
     </>
   );
 }
+
+    
