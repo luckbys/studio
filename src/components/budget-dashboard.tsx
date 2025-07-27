@@ -1,10 +1,21 @@
 
 'use client';
 
-import { useState, useMemo, type FC } from 'react';
+import { useState, useMemo, type FC, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  Timestamp
+} from 'firebase/firestore';
 import {
   ArrowDown,
   ArrowUp,
@@ -21,15 +32,6 @@ import {
   Target,
   Lightbulb,
 } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
-import {
-  Bar,
-  BarChart as RechartsBarChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from 'recharts';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -94,6 +96,8 @@ import { Separator } from './ui/separator';
 import { Slider } from './ui/slider';
 import { Progress } from './ui/progress';
 import { type GenerateMonthlySummaryOutput } from '@/ai/flows/generate-monthly-summary';
+import { useAuth } from '@/hooks/use-auth';
+import { db } from '@/lib/firebase';
 
 const transactionSchema = z.object({
   id: z.string().optional(),
@@ -103,23 +107,34 @@ const transactionSchema = z.object({
   category: z.string().min(1, 'A categoria é obrigatória.'),
 });
 
-const initialTransactions: Transaction[] = [
-  { id: '1', type: 'income', name: 'Salário', amount: 5000, category: 'Renda', date: new Date(new Date().setDate(1)).toISOString() },
-  { id: '2', type: 'expense', name: 'Aluguel', amount: 1500, category: 'Moradia', date: new Date(new Date().setDate(5)).toISOString() },
-  { id: '3', type: 'expense', name: 'Supermercado', amount: 800, category: 'Alimentação', date: new Date(new Date().setDate(10)).toISOString() },
-  { id: '4', type: 'expense', name: 'Internet', amount: 100, category: 'Moradia', date: new Date(new Date().setDate(12)).toISOString() },
-  { id: '5', type: 'expense', name: 'Transporte', amount: 250, category: 'Transporte', date: new Date(new Date().setDate(15)).toISOString() },
-];
-
-
 export function BudgetDashboard() {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [aiSummary, setAiSummary] = useState<GenerateMonthlySummaryOutput | string>('');
   const [isSummaryLoading, setSummaryLoading] = useState(false);
   const [savingsGoal, setSavingsGoal] = useState(500);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      const q = query(collection(db, 'users', user.uid, 'transactions'), orderBy('date', 'desc'));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const userTransactions: Transaction[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            userTransactions.push({ 
+                id: doc.id,
+                ...data,
+                date: (data.date as Timestamp).toDate().toISOString(),
+            } as Transaction);
+        });
+        setTransactions(userTransactions);
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
@@ -188,43 +203,61 @@ export function BudgetDashboard() {
   
   const chartData = Object.values(expenseByCategory).sort((a,b) => b.total - a.total);
 
-  const onSubmit = (values: z.infer<typeof transactionSchema>) => {
-    if(editingTransaction) {
-        // Edit transaction
-        const updatedTransactions = transactions.map(t => t.id === editingTransaction.id ? { ...t, ...values, category: values.type === 'income' ? 'Renda' : (values.category as Category) } : t);
-        setTransactions(updatedTransactions);
-        toast({
-            title: 'Transação Atualizada',
-            description: `${values.name} foi atualizada com sucesso.`,
-        });
-    } else {
-        // Add new transaction
-        const newTransaction: Transaction = {
-          id: uuidv4(),
-          type: values.type,
-          name: values.name,
-          amount: values.amount,
-          category: values.type === 'income' ? 'Renda' : (values.category as Category),
-          date: new Date().toISOString(),
-        };
-        setTransactions((prev) => [...prev, newTransaction]);
-        toast({
-          title: 'Transação Adicionada',
-          description: `${values.name} foi adicionado com sucesso.`,
-        });
+  const onSubmit = async (values: z.infer<typeof transactionSchema>) => {
+    if (!user) {
+        toast({ title: "Erro", description: "Você precisa estar logado.", variant: 'destructive'});
+        return;
     }
-    
-    form.reset();
-    setEditingTransaction(null);
-    setDialogOpen(false);
+
+    const transactionData = {
+        type: values.type,
+        name: values.name,
+        amount: values.amount,
+        category: values.type === 'income' ? 'Renda' : (values.category as Category),
+        date: new Date(),
+    }
+
+    try {
+        if(editingTransaction && editingTransaction.id) {
+            const transDocRef = doc(db, 'users', user.uid, 'transactions', editingTransaction.id);
+            await updateDoc(transDocRef, transactionData);
+            toast({
+                title: 'Transação Atualizada',
+                description: `${values.name} foi atualizada com sucesso.`,
+            });
+        } else {
+            await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
+            toast({
+              title: 'Transação Adicionada',
+              description: `${values.name} foi adicionado com sucesso.`,
+            });
+        }
+        
+        form.reset();
+        setEditingTransaction(null);
+        setDialogOpen(false);
+
+    } catch (error) {
+        console.error("Error saving transaction: ", error);
+        toast({ title: "Erro ao salvar", description: "Ocorreu um erro ao salvar a transação.", variant: 'destructive'});
+    }
   };
   
-  const deleteTransaction = (id: string) => {
-    setTransactions(transactions.filter(t => t.id !== id));
-    toast({
-        title: 'Transação Removida',
-        variant: 'destructive',
-    });
+  const deleteTransaction = async (id: string) => {
+    if (!user) {
+        toast({ title: "Erro", description: "Você precisa estar logado.", variant: 'destructive'});
+        return;
+    }
+    try {
+        await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
+        toast({
+            title: 'Transação Removida',
+            description: 'A transação foi removida com sucesso.',
+        });
+    } catch(error) {
+         console.error("Error deleting transaction: ", error);
+        toast({ title: "Erro ao remover", description: "Ocorreu um erro ao remover a transação.", variant: 'destructive'});
+    }
   }
 
   const handleGenerateSummary = async () => {
@@ -265,6 +298,10 @@ export function BudgetDashboard() {
         )
     }
     return <p className="text-sm text-muted-foreground">Clique no botão abaixo para gerar um resumo financeiro com a ajuda da nossa inteligência artificial.</p>;
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
@@ -340,9 +377,7 @@ export function BudgetDashboard() {
                               </TableHeader>
                               <TableBody>
                                   {transactions.length > 0 ? (
-                                      transactions
-                                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                          .map((t) => {
+                                      transactions.map((t) => {
                                               const Icon = categoryIcons[t.category];
                                               return (
                                                   <TableRow key={t.id}>
@@ -380,7 +415,7 @@ export function BudgetDashboard() {
                                                                         </AlertDialogHeader>
                                                                         <AlertDialogFooter>
                                                                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                                            <AlertDialogAction onClick={() => deleteTransaction(t.id)}>Continuar</AlertDialogAction>
+                                                                            <AlertDialogAction onClick={() => t.id && deleteTransaction(t.id)}>Continuar</AlertDialogAction>
                                                                         </AlertDialogFooter>
                                                                     </AlertDialogContent>
                                                                 </AlertDialog>

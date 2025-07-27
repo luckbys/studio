@@ -8,5 +8,5 @@ export type Transaction = {
   name: string;
   amount: number;
   category: Category | 'Renda';
-  date: string;
+  date: string; // ISO 8601 date string
 };
