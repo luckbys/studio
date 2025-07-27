@@ -1,19 +1,42 @@
-import { BudgetDashboard } from '@/components/budget-dashboard';
+import { Button } from '@/components/ui/button';
 import { PiggyBank } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-muted/40 text-foreground">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center">
+        <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
-             <PiggyBank className="h-7 w-7 text-primary" />
+            <PiggyBank className="h-7 w-7 text-primary" />
             <h1 className="text-2xl font-bold tracking-tight">Controle Fácil</h1>
           </div>
+          <nav className="flex items-center gap-2">
+            <Button variant="ghost" asChild>
+              <Link href="/login">Entrar</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/signup">Cadastre-se</Link>
+            </Button>
+          </nav>
         </div>
       </header>
       <main className="flex-1">
-        <BudgetDashboard />
+        <section className="container grid items-center gap-6 pb-8 pt-6 md:py-10">
+          <div className="flex max-w-[980px] flex-col items-start gap-2">
+            <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl">
+              Organize suas finanças de um jeito fácil e inteligente.
+            </h1>
+            <p className="max-w-[700px] text-lg text-muted-foreground">
+              Com o Controle Fácil, você tem uma visão clara de suas rendas e despesas, com insights da nossa IA para te ajudar a economizar.
+            </p>
+          </div>
+          <div className="flex gap-4">
+            <Button asChild size="lg">
+              <Link href="/signup">Comece agora, é grátis</Link>
+            </Button>
+          </div>
+        </section>
       </main>
       <footer className="py-6 md:px-8 md:py-0 bg-background border-t">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-24 md:flex-row">
