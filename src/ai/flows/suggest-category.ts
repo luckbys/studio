@@ -43,7 +43,7 @@ Available Categories:
 - {{this}}
 {{/each}}
 
-Select only one category from the list above.
+Select only one category from the list above. Your response must be only the category name.
 `,
 });
 
