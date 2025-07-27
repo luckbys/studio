@@ -46,8 +46,6 @@ import {
 } from 'recharts';
 import { DateRange } from 'react-day-picker';
 import { subDays, startOfMonth, endOfMonth, startOfISOWeek, endOfISOWeek, format } from 'date-fns';
-import { useDebounce } from 'use-debounce';
-
 
 import { Button } from '@/components/ui/button';
 import {
@@ -157,7 +155,7 @@ export function BudgetDashboard() {
   });
 
   const transactionName = form.watch('name');
-  const [debouncedTransactionName] = useDebounce(transactionName, 750);
+  const transactionType = form.watch('type');
 
   useEffect(() => {
     if (user) {
@@ -207,22 +205,27 @@ export function BudgetDashboard() {
     }
   }, [user]);
 
-  const handleCategorySuggestion = useCallback(async (name: string) => {
-      if (name && name.length > 2 && form.watch('type') === 'expense') {
-          setSuggestionLoading(true);
-          const result = await getAiCategorySuggestion(name);
-          if (result && result.category) {
-              form.setValue('category', result.category);
-          }
-          setSuggestionLoading(false);
-      }
-  }, [form]);
-
   useEffect(() => {
-    if (debouncedTransactionName) {
-      handleCategorySuggestion(debouncedTransactionName);
-    }
-  }, [debouncedTransactionName, handleCategorySuggestion]);
+    const handler = setTimeout(async () => {
+      if (transactionName && transactionName.length > 2 && transactionType === 'expense' && !editingTransaction) {
+        setSuggestionLoading(true);
+        try {
+          const result = await getAiCategorySuggestion(transactionName);
+          if (result && result.category) {
+            form.setValue('category', result.category);
+          }
+        } catch (error) {
+            console.error("Failed to get category suggestion:", error)
+        } finally {
+            setSuggestionLoading(false);
+        }
+      }
+    }, 750); // 750ms debounce delay
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [transactionName, transactionType, form, editingTransaction]);
 
 
   const transactions = useMemo(() => {
@@ -792,7 +795,10 @@ export function BudgetDashboard() {
                   <FormItem>
                     <FormLabel>Tipo</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        form.setValue('category', ''); // Reset category on type change
+                      }}
                       defaultValue={field.value}
                     >
                       <FormControl>
