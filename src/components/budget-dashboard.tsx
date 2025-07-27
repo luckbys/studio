@@ -42,6 +42,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { DateRange } from 'react-day-picker';
+import { subDays, startOfMonth, endOfMonth, startOfISOWeek, endOfISOWeek, format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -108,6 +110,7 @@ import { Progress } from './ui/progress';
 import { type GenerateMonthlySummaryOutput } from '@/ai/flows/generate-monthly-summary';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
+import { DateRangePicker } from '@/components/date-range-picker';
 
 const transactionSchema = z.object({
   id: z.string().optional(),
@@ -121,7 +124,7 @@ const FREE_PLAN_LIMIT = 2;
 
 export function BudgetDashboard() {
   const { user } = useAuth();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(
     null
@@ -133,6 +136,10 @@ export function BudgetDashboard() {
   const [savingsGoal, setSavingsGoal] = useState(500);
   const { toast } = useToast();
   const [aiUsage, setAiUsage] = useState({ count: 0, limitReached: false });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  });
 
   useEffect(() => {
     if (user) {
@@ -151,7 +158,7 @@ export function BudgetDashboard() {
             date: (data.date as Timestamp).toDate().toISOString(),
           } as Transaction);
         });
-        setTransactions(userTransactions);
+        setAllTransactions(userTransactions);
       });
 
       // Listen for user data changes (for AI usage)
@@ -181,6 +188,26 @@ export function BudgetDashboard() {
       };
     }
   }, [user]);
+
+  const transactions = useMemo(() => {
+    return allTransactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      const from = dateRange?.from;
+      const to = dateRange?.to;
+
+      if (from && to) {
+        return transactionDate >= from && transactionDate <= to;
+      }
+      if (from) {
+        return transactionDate >= from;
+      }
+      if (to) {
+        return transactionDate <= to;
+      }
+      return true;
+    });
+  }, [allTransactions, dateRange]);
+
 
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
@@ -477,25 +504,30 @@ export function BudgetDashboard() {
             </CardContent>
           </Card>
         </div>
+
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2">
             <Card>
-              <CardHeader className="flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Transações Recentes</CardTitle>
-                  <CardDescription>
-                    Visualize e gerencie suas movimentações financeiras.
-                  </CardDescription>
+              <CardHeader className="flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+                 <div>
+                    <CardTitle>Transações</CardTitle>
+                    <CardDescription>
+                      Visualize e gerencie suas movimentações financeiras.
+                    </CardDescription>
+                  </div>
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    <DateRangePicker date={dateRange} onDateChange={setDateRange} />
+                    <Button onClick={openAddDialog} className="w-full md:w-auto">
+                      <Plus className="mr-2 h-4 w-4" /> Adicionar
+                    </Button>
                 </div>
-                <Button onClick={openAddDialog}>
-                  <Plus className="mr-2 h-4 w-4" /> Adicionar Transação
-                </Button>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Transação</TableHead>
+                      <TableHead>Data</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead className="w-[100px] text-center">
                         Ações
@@ -524,6 +556,9 @@ export function BudgetDashboard() {
                                   {t.category}
                                 </span>
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(t.date), 'dd/MM/yyyy')}
                             </TableCell>
                             <TableCell className="text-right">
                               <div
@@ -586,8 +621,8 @@ export function BudgetDashboard() {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center h-24">
-                          Nenhuma transação ainda.
+                        <TableCell colSpan={4} className="text-center h-24">
+                          Nenhuma transação no período selecionado.
                         </TableCell>
                       </TableRow>
                     )}
@@ -698,7 +733,7 @@ export function BudgetDashboard() {
               <CardFooter>
                 <Button
                   onClick={handleGenerateSummary}
-                  disabled={isSummaryLoading || aiUsage.limitReached}
+                  disabled={isSummaryLoading || aiUsage.limitReached || transactions.length === 0}
                   className="w-full"
                 >
                   <Wand2 className="mr-2 h-4 w-4" />
