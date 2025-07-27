@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, type FC, useEffect } from 'react';
+import { useState, useMemo, type FC, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,6 +33,7 @@ import {
   Edit,
   Target,
   Lightbulb,
+  Sparkles,
 } from 'lucide-react';
 import {
   BarChart as RechartsBarChart,
@@ -44,6 +45,8 @@ import {
 } from 'recharts';
 import { DateRange } from 'react-day-picker';
 import { subDays, startOfMonth, endOfMonth, startOfISOWeek, endOfISOWeek, format } from 'date-fns';
+import { useDebounce } from 'use-debounce';
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -102,7 +105,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { categories, type Transaction, type Category } from '@/lib/types';
 import { categoryIcons } from '@/components/icons';
-import { getAiSummary } from '@/app/actions';
+import { getAiSummary, getAiCategorySuggestion } from '@/app/actions';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Slider } from './ui/slider';
@@ -133,6 +136,7 @@ export function BudgetDashboard() {
     GenerateMonthlySummaryOutput | string
   >('');
   const [isSummaryLoading, setSummaryLoading] = useState(false);
+  const [isSuggestionLoading, setSuggestionLoading] = useState(false);
   const [savingsGoal, setSavingsGoal] = useState(500);
   const { toast } = useToast();
   const [aiUsage, setAiUsage] = useState({ count: 0, limitReached: false });
@@ -140,6 +144,19 @@ export function BudgetDashboard() {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
+
+  const form = useForm<z.infer<typeof transactionSchema>>({
+    resolver: zodResolver(transactionSchema),
+    defaultValues: {
+      type: 'expense',
+      name: '',
+      amount: 0,
+      category: '',
+    },
+  });
+
+  const transactionName = form.watch('name');
+  const [debouncedTransactionName] = useDebounce(transactionName, 750);
 
   useEffect(() => {
     if (user) {
@@ -189,6 +206,22 @@ export function BudgetDashboard() {
     }
   }, [user]);
 
+  const handleCategorySuggestion = useCallback(async (name: string) => {
+      if (name && name.length > 2 && form.watch('type') === 'expense') {
+          setSuggestionLoading(true);
+          const result = await getAiCategorySuggestion(name);
+          if (result && result.category) {
+              form.setValue('category', result.category);
+          }
+          setSuggestionLoading(false);
+      }
+  }, [form]);
+
+  useEffect(() => {
+      handleCategorySuggestion(debouncedTransactionName);
+  }, [debouncedTransactionName, handleCategorySuggestion]);
+
+
   const transactions = useMemo(() => {
     return allTransactions.filter(t => {
       const transactionDate = new Date(t.date);
@@ -208,16 +241,6 @@ export function BudgetDashboard() {
     });
   }, [allTransactions, dateRange]);
 
-
-  const form = useForm<z.infer<typeof transactionSchema>>({
-    resolver: zodResolver(transactionSchema),
-    defaultValues: {
-      type: 'expense',
-      name: '',
-      amount: 0,
-      category: '',
-    },
-  });
 
   const openEditDialog = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -814,9 +837,15 @@ export function BudgetDashboard() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Categoria</FormLabel>
+                      <FormLabel>
+                         <div className="flex items-center gap-2">
+                           Categoria
+                           {isSuggestionLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                         </div>
+                      </FormLabel>
                       <Select
                         onValueChange={field.onChange}
+                        value={field.value}
                         defaultValue={field.value}
                       >
                         <FormControl>

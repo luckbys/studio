@@ -13,6 +13,10 @@ import {
   generateMonthlySummary,
   type GenerateMonthlySummaryOutput,
 } from '@/ai/flows/generate-monthly-summary';
+import {
+  suggestCategory,
+  type SuggestCategoryOutput,
+} from '@/ai/flows/suggest-category';
 import type { Transaction } from '@/lib/types';
 import { auth } from '@/lib/firebase';
 
@@ -99,5 +103,28 @@ export async function getAiSummary(
   } catch (error) {
     console.error('Error generating AI summary:', error);
     return 'Ocorreu um erro ao gerar o resumo. Por favor, tente novamente mais tarde.';
+  }
+}
+
+export async function getAiCategorySuggestion(
+  transactionName: string
+): Promise<SuggestCategoryOutput | null> {
+  const user = auth.currentUser;
+  // For now, we assume all users can use this feature.
+  // In the future, we can check for the user's plan (free/pro).
+  if (!user) {
+    return null;
+  }
+
+  if (!transactionName || transactionName.trim().length < 3) {
+    return null;
+  }
+
+  try {
+    const result = await suggestCategory({ transactionName });
+    return result;
+  } catch (error) {
+    console.error('Error suggesting category:', error);
+    return null;
   }
 }
