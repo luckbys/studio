@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Lightbulb, LogIn, PiggyBank, Target, Check, X } from 'lucide-react';
+import { BarChart, Lightbulb, LogIn, Wallet, Target, Check, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -12,8 +12,8 @@ export default function Home() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
-            <PiggyBank className="h-7 w-7 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight">Controle Fácil</h1>
+            <Wallet className="h-7 w-7 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight">ecodin</h1>
           </div>
           <nav className="flex items-center gap-2">
             <Button variant="ghost" asChild>
@@ -33,7 +33,7 @@ export default function Home() {
               Organize suas finanças de um jeito fácil e inteligente.
             </h1>
             <p className="max-w-[700px] text-lg text-muted-foreground">
-              Com o Controle Fácil, você tem uma visão clara de suas rendas e despesas, com insights da nossa IA para te ajudar a economizar e atingir suas metas.
+              Com o ecodin, você tem uma visão clara de suas rendas e despesas, com insights da nossa IA para te ajudar a economizar e atingir suas metas.
             </p>
             <div className="flex gap-4">
               <Button asChild size="lg">
@@ -128,7 +128,7 @@ export default function Home() {
           <div className="container">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold tracking-tight">O que nossos usuários dizem</h2>
-              <p className="text-muted-foreground mt-2">Veja como o Controle Fácil está ajudando pessoas a transformarem suas vidas financeiras.</p>
+              <p className="text-muted-foreground mt-2">Veja como o ecodin está ajudando pessoas a transformarem suas vidas financeiras.</p>
             </div>
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               <Card>
@@ -158,7 +158,7 @@ export default function Home() {
                       <p className="text-sm text-muted-foreground">Desenvolvedor</p>
                     </div>
                   </div>
-                  <p className="text-muted-foreground">"O Controle Fácil mudou minha relação com o dinheiro. As metas de economia são um grande motivador. Recomendo!"</p>
+                  <p className="text-muted-foreground">"O ecodin mudou minha relação com o dinheiro. As metas de economia são um grande motivador. Recomendo!"</p>
                 </CardContent>
               </Card>
               <Card>
@@ -286,7 +286,7 @@ export default function Home() {
       <footer className="py-6 md:px-8 md:py-0 bg-background border-t">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-24 md:flex-row">
             <p className="text-balance text-center text-sm leading-loose text-muted-foreground">
-                © {new Date().getFullYear()} Controle Fácil. Todos os direitos reservados.
+                © {new Date().getFullYear()} ecodin. Todos os direitos reservados.
             </p>
         </div>
       </footer>

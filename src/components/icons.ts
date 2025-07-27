@@ -8,7 +8,7 @@ import {
   MoreHorizontal,
   CircleDollarSign,
   type LucideIcon,
-  PiggyBank,
+  Wallet,
 } from 'lucide-react';
 import type { Category } from '@/lib/types';
 

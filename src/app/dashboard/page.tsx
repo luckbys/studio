@@ -3,7 +3,7 @@
 import { BudgetDashboard } from '@/components/budget-dashboard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-import { PiggyBank, LogOut } from 'lucide-react';
+import { Wallet, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -20,7 +20,7 @@ export default function DashboardPage() {
     if (loading || !user) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <PiggyBank className="h-12 w-12 animate-pulse text-primary" />
+                <Wallet className="h-12 w-12 animate-pulse text-primary" />
             </div>
         )
     }
@@ -30,8 +30,8 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
-             <PiggyBank className="h-7 w-7 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight">Controle Fácil</h1>
+             <Wallet className="h-7 w-7 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight">ecodin</h1>
           </div>
            <Button variant="outline" onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />

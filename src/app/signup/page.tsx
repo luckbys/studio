@@ -17,7 +17,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { PiggyBank, Loader2 } from 'lucide-react';
+import { Wallet, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const signupSchema = z.object({
@@ -59,8 +59,8 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="absolute top-8 left-8 flex items-center gap-3 text-lg font-bold">
-         <PiggyBank className="h-7 w-7 text-primary" />
-         <Link href="/">Controle Fácil</Link>
+         <Wallet className="h-7 w-7 text-primary" />
+         <Link href="/">ecodin</Link>
        </div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
