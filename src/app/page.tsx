@@ -1,8 +1,9 @@
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BarChart, Lightbulb, LogIn, PiggyBank, Target } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { BarChart, Lightbulb, LogIn, PiggyBank, Target, Check } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -180,6 +181,85 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Pricing Section */}
+        <section id="pricing" className="py-20">
+            <div className="container">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight">Planos flexíveis para cada necessidade</h2>
+                    <p className="text-muted-foreground mt-2">Escolha o plano que melhor se adapta à sua jornada financeira.</p>
+                </div>
+                <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto">
+                    <Card className="flex flex-col">
+                        <CardHeader>
+                            <CardTitle>Grátis</CardTitle>
+                            <CardDescription>Para quem está começando a organizar as finanças.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-1 space-y-4">
+                            <p className="text-4xl font-bold">R$0<span className="text-xl font-normal text-muted-foreground">/mês</span></p>
+                            <ul className="space-y-2 text-muted-foreground">
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Transações ilimitadas</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Dashboard intuitivo</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Resumos com IA</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Metas de economia</span>
+                                </li>
+                            </ul>
+                        </CardContent>
+                        <CardFooter>
+                            <Button className="w-full" asChild>
+                                <Link href="/signup">Comece Grátis</Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                    <Card className="border-primary flex flex-col">
+                        <CardHeader>
+                            <div className="flex justify-between items-center">
+                                <CardTitle>Pro</CardTitle>
+                                <Badge>Em Breve</Badge>
+                            </div>
+                            <CardDescription>Para quem busca controle total e insights avançados.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-1 space-y-4">
+                            <p className="text-4xl font-bold">R$19,90<span className="text-xl font-normal text-muted-foreground">/mês</span></p>
+                            <ul className="space-y-2 text-muted-foreground">
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Tudo do plano Grátis</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Relatórios avançados</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Contas múltiplas</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary" />
+                                    <span>Suporte prioritário</span>
+                                </li>
+                            </ul>
+                        </CardContent>
+                        <CardFooter>
+                            <Button className="w-full" variant="default" disabled>
+                                Seja o primeiro a saber
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            </div>
+        </section>
+
          {/* Call to Action Section */}
         <section className="container py-20 text-center">
              <h2 className="text-3xl font-bold tracking-tight">Pronto para assumir o controle?</h2>
@@ -202,3 +282,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
