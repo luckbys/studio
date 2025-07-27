@@ -1,14 +1,14 @@
 
 'use client';
-import { BudgetDashboard } from '@/components/budget-dashboard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-import { Wallet, LogOut, BarChartHorizontal } from 'lucide-react';
+import { Wallet, LogOut, LayoutDashboard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { ReportsDashboard } from '@/components/reports-dashboard';
 
-export default function DashboardPage() {
+export default function ReportsPage() {
     const { user, loading, logout } = useAuth();
     const router = useRouter();
 
@@ -36,9 +36,9 @@ export default function DashboardPage() {
           </div>
            <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
-                <Link href="/reports">
-                    <BarChartHorizontal className="mr-2 h-4 w-4" />
-                    Relatórios
+                <Link href="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
                 </Link>
             </Button>
             <Button variant="outline" onClick={logout}>
@@ -49,7 +49,7 @@ export default function DashboardPage() {
         </div>
       </header>
       <main className="flex-1 p-4 md:p-8">
-        <BudgetDashboard />
+        <ReportsDashboard />
       </main>
       <footer className="py-6 md:px-8 md:py-0 bg-background border-t">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-24 md:flex-row">
