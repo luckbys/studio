@@ -17,6 +17,8 @@ import {
   Plus,
   Trash,
   Wand2,
+  Edit,
+  Target,
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -48,6 +50,17 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
   Form,
   FormControl,
   FormField,
@@ -77,8 +90,11 @@ import { categoryIcons } from '@/components/icons';
 import { getAiSummary } from '@/app/actions';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import { Slider } from './ui/slider';
+import { Progress } from './ui/progress';
 
 const transactionSchema = z.object({
+  id: z.string().optional(),
   type: z.enum(['income', 'expense']),
   name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres.'),
   amount: z.coerce.number().positive('O valor deve ser positivo.'),
@@ -96,9 +112,11 @@ const initialTransactions: Transaction[] = [
 
 export function BudgetDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
-  const [isAddTransactionOpen, setAddTransactionOpen] = useState(false);
+  const [isDialogOpen, setDialogOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [aiSummary, setAiSummary] = useState('');
   const [isSummaryLoading, setSummaryLoading] = useState(false);
+  const [savingsGoal, setSavingsGoal] = useState(500);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof transactionSchema>>({
@@ -110,6 +128,29 @@ export function BudgetDashboard() {
       category: '',
     },
   });
+  
+  const openEditDialog = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    form.reset({
+        id: transaction.id,
+        type: transaction.type,
+        name: transaction.name,
+        amount: transaction.amount,
+        category: transaction.category,
+    });
+    setDialogOpen(true);
+  };
+  
+  const openAddDialog = () => {
+    setEditingTransaction(null);
+    form.reset({
+        type: 'expense',
+        name: '',
+        amount: 0,
+        category: '',
+    });
+    setDialogOpen(true);
+  }
 
   const { totalIncome, totalExpenses, balance } = useMemo(() => {
     const income = transactions
@@ -124,6 +165,9 @@ export function BudgetDashboard() {
       balance: income - expenses,
     };
   }, [transactions]);
+  
+  const savedThisMonth = useMemo(() => Math.max(0, balance), [balance]);
+  const savingsProgress = useMemo(() => (savedThisMonth / savingsGoal) * 100, [savedThisMonth, savingsGoal]);
   
   const expenseByCategory = useMemo(() => {
     return transactions
@@ -143,21 +187,34 @@ export function BudgetDashboard() {
   const chartData = Object.values(expenseByCategory).sort((a,b) => b.total - a.total);
 
   const onSubmit = (values: z.infer<typeof transactionSchema>) => {
-    const newTransaction: Transaction = {
-      id: uuidv4(),
-      type: values.type,
-      name: values.name,
-      amount: values.amount,
-      category: values.type === 'income' ? 'Renda' : (values.category as Category),
-      date: new Date().toISOString(),
-    };
-    setTransactions((prev) => [...prev, newTransaction]);
-    toast({
-      title: 'Transação Adicionada',
-      description: `${values.name} foi adicionado com sucesso.`,
-    });
+    if(editingTransaction) {
+        // Edit transaction
+        const updatedTransactions = transactions.map(t => t.id === editingTransaction.id ? { ...t, ...values, category: values.type === 'income' ? 'Renda' : (values.category as Category) } : t);
+        setTransactions(updatedTransactions);
+        toast({
+            title: 'Transação Atualizada',
+            description: `${values.name} foi atualizada com sucesso.`,
+        });
+    } else {
+        // Add new transaction
+        const newTransaction: Transaction = {
+          id: uuidv4(),
+          type: values.type,
+          name: values.name,
+          amount: values.amount,
+          category: values.type === 'income' ? 'Renda' : (values.category as Category),
+          date: new Date().toISOString(),
+        };
+        setTransactions((prev) => [...prev, newTransaction]);
+        toast({
+          title: 'Transação Adicionada',
+          description: `${values.name} foi adicionado com sucesso.`,
+        });
+    }
+    
     form.reset();
-    setAddTransactionOpen(false);
+    setEditingTransaction(null);
+    setDialogOpen(false);
   };
   
   const deleteTransaction = (id: string) => {
@@ -171,7 +228,7 @@ export function BudgetDashboard() {
   const handleGenerateSummary = async () => {
     setSummaryLoading(true);
     setAiSummary('');
-    const summary = await getAiSummary(transactions, 0);
+    const summary = await getAiSummary(transactions, savingsGoal);
     setAiSummary(summary);
     setSummaryLoading(false);
   };
@@ -181,249 +238,300 @@ export function BudgetDashboard() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-8">
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Renda Total</CardTitle>
-            <Banknote className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">{formatCurrency(totalIncome)}</div>
-            <p className="text-xs text-muted-foreground">Total de rendimentos no período</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Despesa Total</CardTitle>
-            <DollarSign className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{formatCurrency(totalExpenses)}</div>
-            <p className="text-xs text-muted-foreground">Total de gastos no período</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saldo</CardTitle>
-            <Landmark className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${balance >= 0 ? 'text-blue-600' : 'text-destructive'}`}>
-              {formatCurrency(balance)}
-            </div>
-            <p className="text-xs text-muted-foreground">Balanço final do período</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Transações Recentes</CardTitle>
-                <CardDescription>Visualize e gerencie suas movimentações financeiras.</CardDescription>
+    <>
+      <div className="grid gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium">Renda Total</CardTitle>
+                      <ArrowUp className="h-5 w-5 text-green-500" />
+                  </CardHeader>
+                  <CardContent>
+                      <div className="text-2xl font-bold text-primary">{formatCurrency(totalIncome)}</div>
+                      <p className="text-xs text-muted-foreground">Total de rendimentos no período</p>
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium">Despesa Total</CardTitle>
+                      <ArrowDown className="h-5 w-5 text-destructive" />
+                  </CardHeader>
+                  <CardContent>
+                      <div className="text-2xl font-bold text-destructive">{formatCurrency(totalExpenses)}</div>
+                      <p className="text-xs text-muted-foreground">Total de gastos no período</p>
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium">Saldo Atual</CardTitle>
+                      <Landmark className="h-5 w-5 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                      <div className={`text-2xl font-bold ${balance >= 0 ? 'text-sky-600' : 'text-destructive'}`}>
+                          {formatCurrency(balance)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Balanço final do período</p>
+                  </CardContent>
+              </Card>
+               <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium">Meta de Economia</CardTitle>
+                      <Target className="h-5 w-5 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                      <div className="text-2xl font-bold text-sky-600">{formatCurrency(savedThisMonth)}</div>
+                       <div className="flex items-center gap-2">
+                          <Progress value={savingsProgress} className="h-2 flex-1" />
+                          <span className="text-xs font-semibold text-muted-foreground">{Math.round(savingsProgress)}%</span>
+                      </div>
+                  </CardContent>
+              </Card>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="xl:col-span-2">
+                  <Card>
+                      <CardHeader className="flex-row items-center justify-between">
+                          <div>
+                            <CardTitle>Transações Recentes</CardTitle>
+                            <CardDescription>Visualize e gerencie suas movimentações financeiras.</CardDescription>
+                          </div>
+                          <Button onClick={openAddDialog}>
+                              <Plus className="mr-2 h-4 w-4" /> Adicionar Transação
+                          </Button>
+                      </CardHeader>
+                      <CardContent>
+                           <Table>
+                              <TableHeader>
+                                  <TableRow>
+                                      <TableHead>Transação</TableHead>
+                                      <TableHead className="text-right">Valor</TableHead>
+                                      <TableHead className="w-[100px] text-center">Ações</TableHead>
+                                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                  {transactions.length > 0 ? (
+                                      transactions
+                                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                          .map((t) => {
+                                              const Icon = categoryIcons[t.category];
+                                              return (
+                                                  <TableRow key={t.id}>
+                                                      <TableCell className="font-medium flex items-center gap-3">
+                                                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+                                                              <Icon className={`h-5 w-5 ${t.type === 'income' ? 'text-green-500' : 'text-muted-foreground'}`} />
+                                                          </div>
+                                                          <div className="flex flex-col">
+                                                              <span className="font-semibold">{t.name}</span>
+                                                              <span className="text-xs text-muted-foreground">{t.category}</span>
+                                                          </div>
+                                                      </TableCell>
+                                                      <TableCell className="text-right">
+                                                          <div className={`font-mono font-semibold text-base ${t.type === 'income' ? 'text-green-600' : 'text-slate-700'}`}>
+                                                              {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
+                                                          </div>
+                                                      </TableCell>
+                                                      <TableCell className="text-center">
+                                                           <div className="flex justify-center gap-1">
+                                                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(t)}>
+                                                                  <Edit className="h-4 w-4 text-muted-foreground" />
+                                                              </Button>
+                                                              <AlertDialog>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                            <Trash className="h-4 w-4 text-muted-foreground" />
+                                                                        </Button>
+                                                                    </AlertDialogTrigger>
+                                                                    <AlertDialogContent>
+                                                                        <AlertDialogHeader>
+                                                                            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                                            <AlertDialogDescription>
+                                                                                Essa ação não pode ser desfeita. Isso excluirá permanentemente sua transação.
+                                                                            </AlertDialogDescription>
+                                                                        </AlertDialogHeader>
+                                                                        <AlertDialogFooter>
+                                                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                                            <AlertDialogAction onClick={() => deleteTransaction(t.id)}>Continuar</AlertDialogAction>
+                                                                        </AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+                                                          </div>
+                                                      </TableCell>
+                                                  </TableRow>
+                                              );
+                                          })
+                                  ) : (
+                                      <TableRow>
+                                          <TableCell colSpan={3} className="text-center h-24">Nenhuma transação ainda.</TableCell>
+                                      </TableRow>
+                                  )}
+                              </TableBody>
+                          </Table>
+                      </CardContent>
+                  </Card>
               </div>
-               <Dialog open={isAddTransactionOpen} onOpenChange={setAddTransactionOpen}>
-                <DialogTrigger asChild>
-                    <Button><Plus className="mr-2 h-4 w-4"/> Adicionar Transação</Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                    <DialogTitle>Adicionar nova transação</DialogTitle>
-                    <DialogDescription>Preencha os detalhes da sua renda ou despesa.</DialogDescription>
-                    </DialogHeader>
-                    <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="type"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Tipo</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                    <SelectValue placeholder="Selecione o tipo" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="income">Renda</SelectItem>
-                                    <SelectItem value="expense">Despesa</SelectItem>
-                                </SelectContent>
-                                </Select>
-                            </FormItem>
-                            )}
-                        />
-                        <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Nome</FormLabel>
-                            <FormControl><Input placeholder="Ex: Salário, Aluguel" {...field} /></FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <FormField
-                        control={form.control}
-                        name="amount"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Valor</FormLabel>
-                            <FormControl><Input type="number" placeholder="R$ 100,00" {...field} /></FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        {form.watch('type') === 'expense' && (
-                            <FormField
-                                control={form.control}
-                                name="category"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Categoria</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecione uma categoria" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                                    </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        )}
-                        <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancelar</Button>
-                        </DialogClose>
-                        <Button type="submit">Adicionar</Button>
-                        </DialogFooter>
-                    </form>
-                    </Form>
-                </DialogContent>
-                </Dialog>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                 <TableHeader>
-                    <TableRow>
-                        <TableHead>Transação</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                        <TableHead className="w-[80px]"></TableHead>
-                    </TableRow>
-                 </TableHeader>
-                <TableBody>
-                  {transactions.length > 0 ? (
-                    transactions
-                      .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .map((t) => {
-                        const Icon = categoryIcons[t.category];
-                        return (
-                        <TableRow key={t.id}>
-                          <TableCell className="font-medium flex items-center gap-3">
-                              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
-                                 <Icon className={`h-5 w-5 ${t.type === 'income' ? 'text-green-500' : 'text-muted-foreground'}`}/>
-                              </div>
-                              <div className="flex flex-col">
-                                 <span className="font-semibold">{t.name}</span>
-                                 <span className="text-xs text-muted-foreground">{t.category}</span>
-                              </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                              <div className={`font-mono font-semibold text-base ${t.type === 'income' ? 'text-green-600' : 'text-slate-700'}`}>
-                                {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
-                              </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteTransaction(t.id)}>
-                                <Trash className="h-4 w-4 text-muted-foreground"/>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                        );
-                      })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center h-24">Nenhuma transação ainda.</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-1 space-y-6">
-           <Card>
-                <CardHeader>
-                    <CardTitle>Gastos por Categoria</CardTitle>
-                    <CardDescription>Visão geral de onde seu dinheiro está indo.</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[250px] w-full pl-0">
-                    {chartData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RechartsBarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30 }}>
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} width={100} />
-                                <Tooltip
-                                  cursor={{ fill: 'hsl(var(--muted))' }}
-                                  content={({ active, payload }) => {
-                                    if (active && payload && payload.length) {
-                                      return (
-                                        <div className="rounded-lg border bg-background p-2 shadow-sm">
-                                          <p className="font-medium">{`${payload[0].payload.name}`}</p>
-                                          <p className="text-sm text-primary font-semibold">{formatCurrency(payload[0].value as number)}</p>
-                                        </div>
-                                      );
-                                    }
-                                    return null;
-                                  }}
+              <div className="space-y-6">
+                 <Card>
+                      <CardHeader>
+                          <CardTitle>Definir Meta de Economia</CardTitle>
+                          <CardDescription>Use o slider para definir sua meta mensal.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                           <div className="flex flex-col gap-4">
+                               <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground">Sua meta:</span>
+                                    <span className="font-bold text-lg text-primary">{formatCurrency(savingsGoal)}</span>
+                               </div>
+                               <Slider
+                                  defaultValue={[savingsGoal]}
+                                  max={Math.max(1000, totalIncome)}
+                                  step={50}
+                                  onValueChange={(value) => setSavingsGoal(value[0])}
                                 />
-                                <Bar dataKey="total" radius={[0, 4, 4, 0]} fill="hsl(var(--chart-1))" />
-                            </RechartsBarChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                            <p>Nenhuma despesa para exibir.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Resumo com IA</CardTitle>
-                    <CardDescription>Receba insights sobre seus hábitos financeiros.</CardDescription>
-                </CardHeader>
-                 <CardContent className="flex flex-col h-[236px]">
-                    {isSummaryLoading ? (
-                        <div className="flex-1 flex items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : (
-                         <ScrollArea className="flex-1">
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                                {aiSummary || 'Clique no botão abaixo para gerar um resumo financeiro com a ajuda da nossa inteligência artificial.'}
-                            </p>
-                        </ScrollArea>
-                    )}
-                </CardContent>
-                <CardFooter>
-                    <Button onClick={handleGenerateSummary} disabled={isSummaryLoading} className="w-full">
-                        <Wand2 className="mr-2 h-4 w-4" />
-                        {isSummaryLoading ? 'Gerando...' : 'Gerar Resumo'}
-                    </Button>
-                </CardFooter>
-            </Card>
-        </div>
+                           </div>
+                      </CardContent>
+                  </Card>
+                  <Card className="h-[350px] flex flex-col">
+                      <CardHeader>
+                          <CardTitle>Gastos por Categoria</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-1 pl-2">
+                           {chartData.length > 0 ? (
+                              <ResponsiveContainer width="100%" height="100%">
+                                  <RechartsBarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30 }}>
+                                      <XAxis type="number" hide />
+                                      <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} width={80} />
+                                      <Tooltip
+                                          cursor={{ fill: 'hsl(var(--accent))' }}
+                                          content={({ active, payload }) => {
+                                              if (active && payload && payload.length) {
+                                                  return (
+                                                      <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                                          <p className="font-medium">{`${payload[0].payload.name}`}</p>
+                                                          <p className="text-sm text-primary font-semibold">{formatCurrency(payload[0].value as number)}</p>
+                                                      </div>
+                                                  );
+                                              }
+                                              return null;
+                                          }} />
+                                      <Bar dataKey="total" radius={[0, 4, 4, 0]} fill="hsl(var(--primary))" />
+                                  </RechartsBarChart>
+                              </ResponsiveContainer>
+                          ) : (
+                              <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                                  <p>Nenhuma despesa para exibir.</p>
+                              </div>
+                          )}
+                      </CardContent>
+                  </Card>
+                  <Card className="h-[350px] flex flex-col">
+                      <CardHeader>
+                          <CardTitle>Resumo com IA</CardTitle>
+                          <CardDescription>Receba insights sobre seus hábitos.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col">
+                           {isSummaryLoading ? (
+                              <div className="flex-1 flex items-center justify-center">
+                                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                              </div>
+                          ) : (
+                              <ScrollArea className="flex-1">
+                                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                                      {aiSummary || 'Clique no botão abaixo para gerar um resumo financeiro com a ajuda da nossa inteligência artificial.'}
+                                  </p>
+                              </ScrollArea>
+                          )}
+                      </CardContent>
+                      <CardFooter>
+                          <Button onClick={handleGenerateSummary} disabled={isSummaryLoading} className="w-full">
+                              <Wand2 className="mr-2 h-4 w-4" />
+                              {isSummaryLoading ? 'Gerando...' : 'Gerar Resumo'}
+                          </Button>
+                      </CardFooter>
+                  </Card>
+              </div>
+          </div>
       </div>
-    </div>
+      
+       <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
+                  <DialogDescription>{editingTransaction ? 'Atualize os detalhes da sua transação.' : 'Preencha os detalhes da sua renda ou despesa.'}</DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                          control={form.control}
+                          name="type"
+                          render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Tipo</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormControl>
+                                          <SelectTrigger>
+                                              <SelectValue placeholder="Selecione o tipo" />
+                                          </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                          <SelectItem value="income">Renda</SelectItem>
+                                          <SelectItem value="expense">Despesa</SelectItem>
+                                      </SelectContent>
+                                  </Select>
+                              </FormItem>
+                          )} />
+                      <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Nome</FormLabel>
+                                  <FormControl><Input placeholder="Ex: Salário, Aluguel" {...field} /></FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )} />
+                      <FormField
+                          control={form.control}
+                          name="amount"
+                          render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Valor</FormLabel>
+                                  <FormControl><Input type="number" placeholder="R$ 100,00" {...field} /></FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )} />
+                      {form.watch('type') === 'expense' && (
+                          <FormField
+                              control={form.control}
+                              name="category"
+                              render={({ field }) => (
+                                  <FormItem>
+                                      <FormLabel>Categoria</FormLabel>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                          <FormControl>
+                                              <SelectTrigger>
+                                                  <SelectValue placeholder="Selecione uma categoria" />
+                                              </SelectTrigger>
+                                          </FormControl>
+                                          <SelectContent>
+                                              {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                                          </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                  </FormItem>
+                              )} />
+                      )}
+                      <DialogFooter>
+                          <DialogClose asChild>
+                              <Button type="button" variant="secondary">Cancelar</Button>
+                          </DialogClose>
+                          <Button type="submit">{editingTransaction ? 'Salvar Alterações' : 'Adicionar'}</Button>
+                      </DialogFooter>
+                  </form>
+              </Form>
+          </DialogContent>
+      </Dialog>
+    </>
   );
 }
+
+    
