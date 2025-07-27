@@ -32,15 +32,19 @@ const prompt = ai.definePrompt({
     name: 'suggestCategoryPrompt',
     input: { schema: SuggestCategoryInputSchema },
     output: { schema: SuggestCategoryOutputSchema },
-    prompt: `You are a financial assistant. Based on the transaction name, suggest the most appropriate category from the list below.
+    prompt: `You are an expert financial assistant. Your task is to categorize a transaction based on its name.
+    
+Analyze the following transaction name and assign it to the most appropriate category from the list provided.
 
-    Transaction Name: {{{transactionName}}}
+Transaction Name: {{{transactionName}}}
 
-    Categories:
-    {{#each categories}}
-    - {{this}}
-    {{/each}}
-    `,
+Available Categories:
+{{#each categories}}
+- {{this}}
+{{/each}}
+
+Select only one category from the list above.
+`,
 });
 
 const suggestCategoryFlow = ai.defineFlow(
