@@ -119,7 +119,7 @@ const transactionSchema = z.object({
   type: z.enum(['income', 'expense']),
   name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres.'),
   amount: z.coerce.number().positive('O valor deve ser positivo.'),
-  category: z.string().min(1, 'A categoria é obrigatória.'),
+  category: z.string().optional(),
 });
 
 const FREE_PLAN_LIMIT = 2;
@@ -294,6 +294,11 @@ export function BudgetDashboard() {
       return;
     }
     
+    if (values.type === 'expense' && !values.category) {
+        form.setError('category', { message: 'A categoria é obrigatória para despesas.' });
+        return;
+    }
+
     const userDocRef = doc(db, 'users', user.uid);
     const userDocSnap = await getDoc(userDocRef);
     if (!userDocSnap.exists()) {
