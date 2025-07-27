@@ -1,25 +1,28 @@
+
 'use client';
 import { BudgetDashboard } from '@/components/budget-dashboard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { PiggyBank, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function DashboardPage() {
     const { user, loading, logout } = useAuth();
     const router = useRouter();
 
-    if (loading) {
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
+
+    if (loading || !user) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <PiggyBank className="h-12 w-12 animate-pulse text-primary" />
             </div>
         )
-    }
-
-    if (!user) {
-        router.push('/login');
-        return null;
     }
     
   return (
