@@ -1,9 +1,9 @@
 'use server';
 
-import { generateMonthlySummary } from '@/ai/flows/generate-monthly-summary';
+import { generateMonthlySummary, type GenerateMonthlySummaryOutput } from '@/ai/flows/generate-monthly-summary';
 import type { Transaction } from '@/lib/types';
 
-export async function getAiSummary(transactions: Transaction[], savingsGoal: number) {
+export async function getAiSummary(transactions: Transaction[], savingsGoal: number): Promise<GenerateMonthlySummaryOutput | string> {
   try {
     const income = transactions
       .filter((t) => t.type === 'income')
@@ -25,7 +25,7 @@ export async function getAiSummary(transactions: Transaction[], savingsGoal: num
       expenses,
       savingsGoal: savingsGoal > 0 ? savingsGoal : undefined,
     });
-    return result.summary;
+    return result;
   } catch (error) {
     console.error('Error generating AI summary:', error);
     return 'Ocorreu um erro ao gerar o resumo. Por favor, tente novamente mais tarde.';

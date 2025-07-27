@@ -19,6 +19,7 @@ import {
   Wand2,
   Edit,
   Target,
+  Lightbulb,
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -92,6 +93,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Slider } from './ui/slider';
 import { Progress } from './ui/progress';
+import { type GenerateMonthlySummaryOutput } from '@/ai/flows/generate-monthly-summary';
 
 const transactionSchema = z.object({
   id: z.string().optional(),
@@ -114,7 +116,7 @@ export function BudgetDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [aiSummary, setAiSummary] = useState('');
+  const [aiSummary, setAiSummary] = useState<GenerateMonthlySummaryOutput | string>('');
   const [isSummaryLoading, setSummaryLoading] = useState(false);
   const [savingsGoal, setSavingsGoal] = useState(500);
   const { toast } = useToast();
@@ -235,6 +237,34 @@ export function BudgetDashboard() {
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
+  }
+  
+  const renderAiSummary = () => {
+    if (typeof aiSummary === 'string') {
+        return <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{aiSummary || 'Clique no botão abaixo para gerar um resumo financeiro com a ajuda da nossa inteligência artificial.'}</p>;
+    }
+    if (typeof aiSummary === 'object' && aiSummary !== null) {
+        return (
+            <div className="space-y-4">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{aiSummary.summary}</p>
+                
+                {aiSummary.suggestions && aiSummary.suggestions.length > 0 && (
+                  <div>
+                      <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
+                        <Lightbulb className="h-5 w-5 text-yellow-500" />
+                        Sugestões de Economia
+                      </h4>
+                      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                        {aiSummary.suggestions.map((suggestion, index) => (
+                            <li key={index}>{suggestion}</li>
+                        ))}
+                      </ul>
+                  </div>
+                )}
+            </div>
+        )
+    }
+    return <p className="text-sm text-muted-foreground">Clique no botão abaixo para gerar um resumo financeiro com a ajuda da nossa inteligência artificial.</p>;
   }
 
   return (
@@ -423,10 +453,10 @@ export function BudgetDashboard() {
                           )}
                       </CardContent>
                   </Card>
-                  <Card className="h-[350px] flex flex-col">
+                  <Card className="min-h-[350px] flex flex-col">
                       <CardHeader>
                           <CardTitle>Resumo com IA</CardTitle>
-                          <CardDescription>Receba insights sobre seus hábitos.</CardDescription>
+                          <CardDescription>Receba insights e sugestões para economizar.</CardDescription>
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col">
                            {isSummaryLoading ? (
@@ -434,10 +464,8 @@ export function BudgetDashboard() {
                                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                               </div>
                           ) : (
-                              <ScrollArea className="flex-1">
-                                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                                      {aiSummary || 'Clique no botão abaixo para gerar um resumo financeiro com a ajuda da nossa inteligência artificial.'}
-                                  </p>
+                              <ScrollArea className="flex-1 pr-4">
+                                {renderAiSummary()}
                               </ScrollArea>
                           )}
                       </CardContent>
@@ -533,5 +561,3 @@ export function BudgetDashboard() {
     </>
   );
 }
-
-    

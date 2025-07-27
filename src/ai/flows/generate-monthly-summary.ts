@@ -20,6 +20,7 @@ export type GenerateMonthlySummaryInput = z.infer<typeof GenerateMonthlySummaryI
 
 const GenerateMonthlySummaryOutputSchema = z.object({
   summary: z.string().describe('A summary of monthly spending habits.'),
+  suggestions: z.array(z.string()).describe('A list of personalized savings suggestions.'),
 });
 export type GenerateMonthlySummaryOutput = z.infer<typeof GenerateMonthlySummaryOutputSchema>;
 
@@ -31,10 +32,15 @@ const prompt = ai.definePrompt({
   name: 'generateMonthlySummaryPrompt',
   input: {schema: GenerateMonthlySummaryInputSchema},
   output: {schema: GenerateMonthlySummaryOutputSchema},
-  prompt: `Você é um consultor financeiro especializado em ajudar as pessoas a entender seus hábitos de gastos mensais.
+  prompt: `Você é um consultor financeiro especializado em ajudar as pessoas a entender e melhorar seus hábitos de gastos mensais.
 
-  Com base nas informações fornecidas, gere um resumo conciso dos hábitos de gastos do usuário, destacando as principais áreas de gastos excessivos ou economia.
-  Forneça o resumo em português.
+  Com base nas informações financeiras fornecidas, sua tarefa é:
+  1. Gerar um resumo conciso e analítico dos hábitos de gastos do usuário.
+  2. Identificar as principais áreas de gastos e compará-las com a renda.
+  3. Com base na análise, fornecer uma lista de sugestões práticas e acionáveis para ajudar o usuário a economizar dinheiro. As sugestões devem ser claras e diretas.
+  4. Se uma meta de economia foi definida, leve-a em consideração ao fazer suas recomendações.
+
+  Forneça a resposta em português.
 
   Renda: {{{income}}}
   Despesas:
